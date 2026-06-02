@@ -5,6 +5,10 @@ DROP TABLE IF EXISTS meal CASCADE;
 DROP TABLE IF EXISTS food CASCADE;
 DROP TABLE IF EXISTS app_user CASCADE;
 
+DROP FUNCTION IF EXISTS refresh_daily_log_totals(INTEGER) CASCADE;
+DROP FUNCTION IF EXISTS trg_refresh_daily_log_after_log_meal_change() CASCADE;
+DROP FUNCTION IF EXISTS trg_refresh_daily_log_after_meal_item_change() CASCADE;
+
 CREATE TABLE app_user (
     user_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -23,8 +27,6 @@ CREATE TABLE food (
     carbs NUMERIC(8,2) NOT NULL CHECK (carbs >= 0),
     fats NUMERIC(8,2) NOT NULL CHECK (fats >= 0),
     source VARCHAR(150) DEFAULT 'Frida Food Data, DTU National Food Institute'
-);
-    
 );
 
 CREATE INDEX idx_food_name_lower ON food (LOWER(name));
@@ -62,10 +64,12 @@ CREATE TABLE daily_log_meal (
     UNIQUE (log_id, meal_id)
 );
 
--- Bonus: a view used by the web app to compute meal nutrition from SQL.
 CREATE VIEW meal_nutrition AS
 SELECT
     m.meal_id,
+    m.user_id,
+    m.name,
+    m.meal_type,
     COALESCE(SUM(f.calories * mi.quantity_grams / 100), 0)::NUMERIC(10,2) AS calories,
     COALESCE(SUM(f.protein  * mi.quantity_grams / 100), 0)::NUMERIC(10,2) AS protein,
     COALESCE(SUM(f.carbs    * mi.quantity_grams / 100), 0)::NUMERIC(10,2) AS carbs,
@@ -73,9 +77,8 @@ SELECT
 FROM meal m
 LEFT JOIN meal_item mi ON m.meal_id = mi.meal_id
 LEFT JOIN food f ON mi.food_id = f.food_id
-GROUP BY m.meal_id;
+GROUP BY m.meal_id, m.user_id, m.name, m.meal_type;
 
--- Bonus: a view for dashboard display.
 CREATE VIEW daily_log_summary AS
 SELECT
     dl.log_id,
@@ -90,34 +93,86 @@ LEFT JOIN daily_log_meal dlm ON dl.log_id = dlm.log_id
 LEFT JOIN meal_nutrition mn ON dlm.meal_id = mn.meal_id
 GROUP BY dl.log_id, dl.user_id, dl.log_date;
 
--- Bonus: trigger keeps the stored daily_log total_* columns in sync when meals are logged/unlogged.
 CREATE OR REPLACE FUNCTION refresh_daily_log_totals(target_log_id INTEGER)
 RETURNS VOID AS $$
 BEGIN
     UPDATE daily_log dl
     SET
-        total_calories = s.calories,
-        total_protein = s.protein,
-        total_carbs = s.carbs,
-        total_fats = s.fats
-    FROM daily_log_summary s
-    WHERE dl.log_id = s.log_id
-      AND dl.log_id = target_log_id;
+        total_calories = COALESCE(s.calories, 0),
+        total_protein = COALESCE(s.protein, 0),
+        total_carbs = COALESCE(s.carbs, 0),
+        total_fats = COALESCE(s.fats, 0)
+    FROM (
+        SELECT
+            dl.log_id,
+            COALESCE(SUM(mn.calories), 0)::NUMERIC(10,2) AS calories,
+            COALESCE(SUM(mn.protein), 0)::NUMERIC(10,2) AS protein,
+            COALESCE(SUM(mn.carbs), 0)::NUMERIC(10,2) AS carbs,
+            COALESCE(SUM(mn.fats), 0)::NUMERIC(10,2) AS fats
+        FROM daily_log dl
+        LEFT JOIN daily_log_meal dlm ON dl.log_id = dlm.log_id
+        LEFT JOIN meal_nutrition mn ON dlm.meal_id = mn.meal_id
+        WHERE dl.log_id = target_log_id
+        GROUP BY dl.log_id
+    ) s
+    WHERE dl.log_id = s.log_id;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION daily_log_meal_changed()
+CREATE OR REPLACE FUNCTION trg_refresh_daily_log_after_log_meal_change()
 RETURNS TRIGGER AS $$
 BEGIN
-    PERFORM refresh_daily_log_totals(COALESCE(NEW.log_id, OLD.log_id));
-    RETURN COALESCE(NEW, OLD);
+    IF TG_OP = 'INSERT' THEN
+        PERFORM refresh_daily_log_totals(NEW.log_id);
+        RETURN NEW;
+    ELSIF TG_OP = 'UPDATE' THEN
+        PERFORM refresh_daily_log_totals(OLD.log_id);
+        PERFORM refresh_daily_log_totals(NEW.log_id);
+        RETURN NEW;
+    ELSIF TG_OP = 'DELETE' THEN
+        PERFORM refresh_daily_log_totals(OLD.log_id);
+        RETURN OLD;
+    END IF;
+
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_daily_log_meal_after_insert
-AFTER INSERT ON daily_log_meal
-FOR EACH ROW EXECUTE FUNCTION daily_log_meal_changed();
+CREATE TRIGGER refresh_daily_log_after_log_meal_change
+AFTER INSERT OR UPDATE OR DELETE ON daily_log_meal
+FOR EACH ROW
+EXECUTE FUNCTION trg_refresh_daily_log_after_log_meal_change();
 
-CREATE TRIGGER trg_daily_log_meal_after_delete
-AFTER DELETE ON daily_log_meal
-FOR EACH ROW EXECUTE FUNCTION daily_log_meal_changed();
+CREATE OR REPLACE FUNCTION trg_refresh_daily_log_after_meal_item_change()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        PERFORM refresh_daily_log_totals(dlm.log_id)
+        FROM daily_log_meal dlm
+        WHERE dlm.meal_id = NEW.meal_id;
+
+        RETURN NEW;
+
+    ELSIF TG_OP = 'UPDATE' THEN
+        PERFORM refresh_daily_log_totals(dlm.log_id)
+        FROM daily_log_meal dlm
+        WHERE dlm.meal_id IN (OLD.meal_id, NEW.meal_id);
+
+        RETURN NEW;
+
+    ELSIF TG_OP = 'DELETE' THEN
+        PERFORM refresh_daily_log_totals(dlm.log_id)
+        FROM daily_log_meal dlm
+        WHERE dlm.meal_id = OLD.meal_id;
+
+        RETURN OLD;
+    END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER refresh_daily_log_after_meal_item_change
+AFTER INSERT OR UPDATE OR DELETE ON meal_item
+FOR EACH ROW
+EXECUTE FUNCTION trg_refresh_daily_log_after_meal_item_change();
