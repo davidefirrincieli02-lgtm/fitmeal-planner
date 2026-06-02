@@ -85,7 +85,20 @@ http://127.0.0.1:5000
 
 ## Data source
 
-The seed data is a small sample dataset for development. The project idea is designed to work with public nutrition datasets such as USDA FoodData Central. For the submitted version, either keep the sample data if allowed as synthesized data, or replace/extend `db/seed.sql` with records imported from the chosen public nutrition dataset.
+The food data used in this project comes from Frida Food Data, the Danish Food Composition Database published by the National Food Institute, Technical University of Denmark (DTU).
+
+Frida contains nutrient information for foods available on the Danish market. For this project, we use a small manually selected subset of approximately 50–100 common food items, rather than the full database. This keeps the project scope manageable while still using a real European nutrition data source.
+
+For each food item, the application stores nutrition values per 100g:
+
+Energy in kcal
+Protein
+Carbohydrates
+Fat
+
+The original Frida dataset can be downloaded as a spreadsheet. The selected subset is inserted into the database through db/seed.sql.
+
+Source: Frida Food Data, National Food Institute, Technical University of Denmark.
 
 ## Repository access
 
