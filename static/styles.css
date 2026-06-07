@@ -110,4 +110,28 @@ code {
 @media (max-width: 760px) {
     .two-cols { grid-template-columns: 1fr; }
     .inline-form { flex-direction: column; }
+
+
+    .table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.food-scroll {
+    max-height: 330px;
+    overflow-y: auto;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 10px;
+}
+
+.food-scroll table {
+    margin: 0;
+}
+
+.food-scroll thead th {
+    position: sticky;
+    top: 0;
+    background: var(--card, #ffffff);
+    z-index: 1;
+}
 }
