@@ -5,18 +5,19 @@ FitMeal Planner is a small Flask + PostgreSQL web application for fitness and nu
 ## Assignment checklist
 
 * Git repository for source code and documentation
-* E/R diagram in docs/ER.md
-* SQL database schema and seed scripts in db/
+* E/R diagram in `docs/ER.md`
+* SQL database schema and seed scripts in `db/`
 * Web app interacts with PostgreSQL through SQL statements
-* Regex feature: the food search parses terms such as chicken protein>=20 calories<300
-* AI declaration in AI_DECLARATION.md
-* Bonus: SQL views and triggers in db/schema.sql
+* Regex feature: the food search parses terms such as `chicken protein>=20 calories<300`
+* AI declaration in `AI_DECLARATION.md`
+* Bonus: SQL views and triggers in `db/schema.sql`
 
 ## Requirements
 
 * Python 3.10+
 * PostgreSQL 16+
-* A local PostgreSQL database named fitmeal_planner
+* pgAdmin
+* A local PostgreSQL database named `fitmeal_planner`
 
 ## Setup
 
@@ -24,68 +25,72 @@ FitMeal Planner is a small Flask + PostgreSQL web application for fitness and nu
 
 Create a PostgreSQL database named:
 
-text
+```text
 fitmeal_planner
-
+```
 
 Using pgAdmin:
 
 1. Open pgAdmin.
 2. Connect to your PostgreSQL server.
-3. Right-click *Databases*.
-4. Choose *Create → Database...*
+3. Right-click **Databases**.
+4. Choose **Create → Database...**
 5. Set the database name to:
 
-text
+```text
 fitmeal_planner
-
+```
 
 6. Set the owner to your PostgreSQL user, usually:
 
-text
+```text
 postgres
+```
 
-
-7. Click *Save*.
+7. Click **Save**.
 
 ## 2. Create a virtual environment and install dependencies
 
 From the repository folder, run:
 
-bash
+```bash
 python -m venv .venv
-
+```
 
 Activate the virtual environment.
 
+On Windows PowerShell:
 
+```powershell
+.venv\Scripts\Activate.ps1
+```
 
 On Windows Command Prompt:
 
-cmd
+```cmd
 .venv\Scripts\activate.bat
-
+```
 
 On macOS/Linux:
 
-bash
+```bash
 source .venv/bin/activate
-
+```
 
 Then install dependencies:
 
-bash
+```bash
 pip install -r requirements.txt
-
+```
 
 ## 3. Initialize the database
 
 The database is initialized with two SQL files:
 
-text
+```text
 db/schema.sql
 db/seed.sql
-
+```
 
 `schema.sql` creates the tables, views, functions, and triggers.
 
@@ -98,39 +103,39 @@ Using pgAdmin:
 3. Open **Tools → Query Tool**.
 4. Open or paste the contents of:
 
-text
+```text
 db/schema.sql
-
+```
 
 5. Execute the script.
 6. Then open or paste the contents of:
 
-text
+```text
 db/seed.sql
-
+```
 
 7. Execute the script.
 
 The order matters:
 
-text
+```text
 1. Run db/schema.sql
 2. Run db/seed.sql
-
+```
 
 Do not run `schema.sql` again after `seed.sql`, because `schema.sql` drops and recreates the tables.
 
 To check that the food data was inserted, run this query in pgAdmin:
 
-sql
+```sql
 SELECT COUNT(*) FROM food;
-
+```
 
 You can also preview the food table with:
 
-sql
+```sql
 SELECT * FROM food LIMIT 10;
-
+```
 
 ## 4. Set the database connection
 
@@ -140,43 +145,43 @@ Use the PostgreSQL password for your local `postgres` user.
 
 ### Windows PowerShell
 
-powershell
+```powershell
 $env:DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/fitmeal_planner"
-
+```
 
 ### Windows Command Prompt
 
-cmd
+```cmd
 set DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/fitmeal_planner
-
+```
 
 ### macOS/Linux
 
-bash
+```bash
 export DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/fitmeal_planner"
-
+```
 
 Replace `YOUR_PASSWORD` with your actual PostgreSQL password.
 
 Example:
 
-cmd
+```cmd
 set DATABASE_URL=postgresql://postgres:myPassword123@localhost:5432/fitmeal_planner
-
+```
 
 ## 5. Run the app
 
 From the repository folder, with the virtual environment activated and `DATABASE_URL` set, run:
 
-bash
+```bash
 python app.py
-
+```
 
 Then open:
 
-text
+```text
 http://127.0.0.1:5000
-
+```
 
 ## How to interact with the web app
 
@@ -224,9 +229,9 @@ For each food item, the application stores nutrition values per 100g:
 
 The selected subset is inserted into the PostgreSQL database through:
 
-text
+```text
 db/seed.sql
-
+```
 
 Source: Frida Food Data, National Food Institute, Technical University of Denmark.
 
@@ -238,7 +243,7 @@ Before submission, ensure that the instructors and Meta-TA have read access to t
 
 An AI declaration is included in:
 
-text
+```text
 AI_DECLARATION.md
 ```
 
