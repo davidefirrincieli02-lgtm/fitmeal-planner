@@ -15,7 +15,7 @@ FitMeal Planner is a small Flask + PostgreSQL web application for fitness and nu
 ## Requirements
 
 * Python 3.10+
-* PostgreSQL 16+
+* PostgreSQL 16+ (including pgAdmin)
 * A local PostgreSQL database named `fitmeal_planner`
 
 ## Setup
