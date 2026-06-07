@@ -205,6 +205,19 @@ def delete_meal_item(meal_item_id):
     return redirect(url_for("index"))
 
 
+@app.route("/meals/<int:meal_id>/delete", methods=["POST"])
+def delete_meal(meal_id):
+    # Remove dependencies first to avoid foreign key constraints errors
+    execute("DELETE FROM meal_item WHERE meal_id = %s", [meal_id])
+    execute("DELETE FROM daily_log_meal WHERE meal_id = %s", [meal_id])
+    
+    # Finally, delete the meal itself
+    execute("DELETE FROM meal WHERE meal_id = %s", [meal_id])
+    
+    flash("Meal deleted successfully.")
+    return redirect(url_for("index"))
+
+
 @app.route("/logs", methods=["GET", "POST"])
 def logs():
     if request.method == "POST":
@@ -266,6 +279,24 @@ def delete_logged_meal(log_meal_id):
     execute("DELETE FROM daily_log_meal WHERE log_meal_id = %s", [log_meal_id])
     flash("Meal removed from log.")
     return redirect(url_for("logs"))
+
+
+@app.route("/users/target", methods=["POST"])
+def update_calorie_target():
+    # Get user_id from the form (defaulting to 1 for local testing)
+    user_id = int(request.form.get("user_id", 1)) 
+    new_target = int(request.form["calorie_target"])
+    
+    # Update the target calories in the database
+    execute(
+        "UPDATE app_user SET calorie_target = %s WHERE user_id = %s",
+        [new_target, user_id]
+    )
+    
+    flash("Calorie target updated successfully.")
+    
+    # Redirect back to the previous page (index or logs)
+    return redirect(request.referrer or url_for("index"))
 
 
 @app.template_filter("round1")

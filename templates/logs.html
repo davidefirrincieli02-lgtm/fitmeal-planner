@@ -11,10 +11,31 @@
     </div>
 
     <div class="card">
-        <h2>Daily totals</h2>
+        <h2>Daily totals & Target</h2>
         {% if log %}
-            <p class="totals">{{ log.total_calories|round1 }} / {{ log.calorie_target }} kcal</p>
+            <p class="totals"><strong>{{ log.total_calories|round1 }} / {{ log.calorie_target }} kcal</strong></p>
             <p>{{ log.total_protein|round1 }}g protein · {{ log.total_carbs|round1 }}g carbs · {{ log.total_fats|round1 }}g fat</p>
+            
+            {% set remaining = log.calorie_target - log.total_calories %}
+            {% if remaining >= 0 %}
+                <p style="color: #2e7d32; font-weight: bold; margin-top: 10px;">
+                    Remaining: {{ remaining|round1 }} kcal
+                </p>
+            {% else %}
+                <p style="color: #c62828; font-weight: bold; margin-top: 10px;">
+                    Over target by: {{ (remaining * -1)|round1 }} kcal
+                </p>
+            {% endif %}
+
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+
+            <form method="post" action="/users/target" class="stacked-form">
+                <input type="hidden" name="user_id" value="1">
+                <label>Update Target (Bulk/Cut/Maintenance)
+                    <input type="number" name="calorie_target" value="{{ log.calorie_target }}" required min="1000" max="6000" placeholder="e.g., 2500">
+                </label>
+                <button type="submit" style="margin-top: 5px;">Save New Target</button>
+            </form>
         {% else %}
             <p>No log exists for {{ selected_date }}. Create it first.</p>
         {% endif %}
@@ -25,14 +46,21 @@
 <section class="grid two-cols">
     <div class="card">
         <h2>Add meal to daily log</h2>
-        <form method="post" action="{{ url_for('add_meal_to_log', log_id=log.log_id) }}" class="stacked-form">
-            <label>Meal
-                <select name="meal_id">
-                {% for meal in meals %}<option value="{{ meal.meal_id }}">{{ meal.name }}</option>{% endfor %}
-                </select>
-            </label>
-            <button type="submit">Log meal</button>
-        </form>
+        
+        {% if meals %}
+            <form method="post" action="{{ url_for('add_meal_to_log', log_id=log.log_id) }}" class="stacked-form">
+                <label>Meal
+                    <select name="meal_id">
+                    {% for meal in meals %}<option value="{{ meal.meal_id }}">{{ meal.name }}</option>{% endfor %}
+                    </select>
+                </label>
+                <button type="submit">Log meal</button>
+            </form>
+        {% else %}
+            <p style="color: #666; margin-top: 10px;">
+                No meals available. <a href="{{ url_for('index') }}" style="color: #1976d2; font-weight: bold; text-decoration: none;">Create a meal first</a>.
+            </p>
+        {% endif %}
     </div>
 
     <div class="card">
