@@ -25,7 +25,6 @@ CREATE TABLE food (
     source VARCHAR(150) DEFAULT 'Frida Food Data, DTU National Food Institute'
 );
     
-);
 
 CREATE INDEX idx_food_name_lower ON food (LOWER(name));
 
