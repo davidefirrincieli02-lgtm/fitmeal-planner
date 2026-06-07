@@ -49,34 +49,30 @@
             </p>
         {% endif %}
 
-        <div class="table-scroll food-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Food</th>
-                        <th>kcal</th>
-                        <th>P</th>
-                        <th>C</th>
-                        <th>F</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for food in foods %}
-                    <tr>
-                        <td>{{ food.name }}</td>
-                        <td>{{ food.calories|round1 }}</td>
-                        <td>{{ food.protein|round1 }}</td>
-                        <td>{{ food.carbs|round1 }}</td>
-                        <td>{{ food.fats|round1 }}</td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="5" class="muted">No foods found.</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<div class="table-scroll food-scroll">
+    <table>
+        <thead>
+            <tr>
+                <th>Food</th>
+                <th>kcal</th>
+                <th>P</th>
+                <th>C</th>
+                <th>F</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for food in foods %}
+            <tr>
+                <td>{{ food.name }}</td>
+                <td>{{ food.calories|round1 }}</td>
+                <td>{{ food.protein|round1 }}</td>
+                <td>{{ food.carbs|round1 }}</td>
+                <td>{{ food.fats|round1 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
     </div>
 </section>
 
