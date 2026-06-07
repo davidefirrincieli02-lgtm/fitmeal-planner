@@ -1,0 +1,310 @@
+# Database Model / E-R Diagram
+
+This document describes the database model for the FitMeal Planner web application.
+
+The application uses a PostgreSQL database to store users, foods, meals, meal items, daily logs, and the connection between daily logs and meals.
+
+## E-R Diagram
+
+```mermaid
+erDiagram
+    APP_USER ||--o{ MEAL : creates
+    APP_USER ||--o{ DAILY_LOG : owns
+
+    MEAL ||--o{ MEAL_ITEM : contains
+    FOOD ||--o{ MEAL_ITEM : used_in
+
+    DAILY_LOG ||--o{ DAILY_LOG_MEAL : contains
+    MEAL ||--o{ DAILY_LOG_MEAL : logged_as
+
+    APP_USER {
+        int user_id PK
+        varchar name
+        varchar email UK
+        numeric weight_kg
+        varchar goal_type
+        int calorie_target
+    }
+
+    FOOD {
+        int food_id PK
+        varchar source_food_id
+        varchar name UK
+        numeric calories
+        numeric protein
+        numeric carbs
+        numeric fats
+        varchar source
+    }
+
+    MEAL {
+        int meal_id PK
+        int user_id FK
+        varchar name
+        varchar meal_type
+        timestamp created_at
+    }
+
+    MEAL_ITEM {
+        int meal_item_id PK
+        int meal_id FK
+        int food_id FK
+        numeric quantity_grams
+    }
+
+    DAILY_LOG {
+        int log_id PK
+        int user_id FK
+        date log_date
+        numeric total_calories
+        numeric total_protein
+        numeric total_carbs
+        numeric total_fats
+    }
+
+    DAILY_LOG_MEAL {
+        int log_meal_id PK
+        int log_id FK
+        int meal_id FK
+    }
+```
+
+## Entity Descriptions
+
+### `app_user`
+
+Stores the user profile used by the application.
+
+Important attributes:
+
+* `user_id`: primary key
+* `name`: user name
+* `email`: unique email address
+* `weight_kg`: user weight
+* `goal_type`: user goal, such as cutting, maintenance, or bulking
+* `calorie_target`: daily calorie target
+
+A user can create many meals and can have many daily logs.
+
+---
+
+### `food`
+
+Stores food items and their nutrition values per 100 grams.
+
+Important attributes:
+
+* `food_id`: primary key
+* `name`: unique food name
+* `calories`: kcal per 100 grams
+* `protein`: protein per 100 grams
+* `carbs`: carbohydrates per 100 grams
+* `fats`: fat per 100 grams
+* `source`: data source for the nutrition values
+
+The food data is based on a selected subset of common food items inspired by Frida Food Data.
+
+---
+
+### `meal`
+
+Stores meals created by a user.
+
+Important attributes:
+
+* `meal_id`: primary key
+* `user_id`: foreign key referencing `app_user`
+* `name`: meal name
+* `meal_type`: breakfast, lunch, dinner, snack, or other
+* `created_at`: timestamp for when the meal was created
+
+A meal belongs to one user. A meal can contain many food items through the `meal_item` table.
+
+---
+
+### `meal_item`
+
+Stores the individual food items inside a meal.
+
+Important attributes:
+
+* `meal_item_id`: primary key
+* `meal_id`: foreign key referencing `meal`
+* `food_id`: foreign key referencing `food`
+* `quantity_grams`: amount of the food item in grams
+
+This table connects meals and foods. It also stores the quantity, which is needed to calculate nutrition totals.
+
+Example:
+
+A meal called "High protein lunch" may contain:
+
+* 150 grams chicken breast
+* 180 grams rice
+* 100 grams broccoli
+
+Each of these is stored as one row in `meal_item`.
+
+---
+
+### `daily_log`
+
+Stores a user's nutrition log for a specific date.
+
+Important attributes:
+
+* `log_id`: primary key
+* `user_id`: foreign key referencing `app_user`
+* `log_date`: the date of the log
+* `total_calories`: total kcal for the day
+* `total_protein`: total protein for the day
+* `total_carbs`: total carbohydrates for the day
+* `total_fats`: total fat for the day
+
+The combination of `user_id` and `log_date` is unique, so each user can only have one daily log per date.
+
+---
+
+### `daily_log_meal`
+
+Stores which meals are included in a daily log.
+
+Important attributes:
+
+* `log_meal_id`: primary key
+* `log_id`: foreign key referencing `daily_log`
+* `meal_id`: foreign key referencing `meal`
+
+This is a bridge table between `daily_log` and `meal`.
+
+It is needed because:
+
+* one daily log can contain many meals
+* one meal can be reused in many daily logs
+
+For example, the same meal "High protein lunch" can be logged on several different dates.
+
+## Relationships
+
+### User to Meal
+
+One user can create many meals.
+
+```text
+app_user 1 --- many meal
+```
+
+Implemented with:
+
+```text
+meal.user_id references app_user.user_id
+```
+
+---
+
+### User to Daily Log
+
+One user can have many daily logs.
+
+```text
+app_user 1 --- many daily_log
+```
+
+Implemented with:
+
+```text
+daily_log.user_id references app_user.user_id
+```
+
+---
+
+### Meal to Food through Meal Item
+
+A meal can contain many foods, and a food can be used in many meals.
+
+```text
+meal many --- many food
+```
+
+Implemented through the bridge table:
+
+```text
+meal_item
+```
+
+The `meal_item` table also stores `quantity_grams`, which is necessary for nutrition calculations.
+
+---
+
+### Daily Log to Meal through Daily Log Meal
+
+A daily log can contain many meals, and the same meal can be reused in many daily logs.
+
+```text
+daily_log many --- many meal
+```
+
+Implemented through the bridge table:
+
+```text
+daily_log_meal
+```
+
+## Views
+
+The database also includes SQL views to calculate nutrition totals.
+
+### `meal_nutrition`
+
+The `meal_nutrition` view calculates the total calories, protein, carbohydrates, and fat for each meal.
+
+It combines:
+
+* `meal`
+* `meal_item`
+* `food`
+
+This allows the application to show meal-level nutrition totals without recalculating everything manually in Python.
+
+---
+
+### `daily_log_summary`
+
+The `daily_log_summary` view calculates daily nutrition totals based on the meals added to a daily log.
+
+It combines:
+
+* `daily_log`
+* `daily_log_meal`
+* `meal_nutrition`
+
+This is used to summarize the nutrition for a specific day.
+
+## Triggers
+
+The database includes triggers that keep the stored daily totals in `daily_log` updated.
+
+When meals are added to or removed from a daily log, the trigger recalculates:
+
+* `total_calories`
+* `total_protein`
+* `total_carbs`
+* `total_fats`
+
+This demonstrates database-side logic and helps ensure that daily totals stay consistent with the logged meals.
+
+## Design Rationale
+
+The model separates foods, meals, and daily logs into different tables to avoid duplicated data.
+
+Foods are stored once in the `food` table. Meals then reference foods through `meal_item`, where the quantity is stored. Daily logs reference meals through `daily_log_meal`, which allows the same meal to be reused across multiple dates.
+
+This structure supports the main app features:
+
+* searching foods
+* creating meals
+* adding foods to meals
+* calculating meal nutrition
+* logging meals to specific dates
+* calculating daily nutrition totals
+* updating daily totals through SQL views and triggers
