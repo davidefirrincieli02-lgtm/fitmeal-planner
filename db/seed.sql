@@ -2,7 +2,8 @@ INSERT INTO app_user (name, email, weight_kg, goal_type, calorie_target) VALUES
 ('Demo User', 'demo@example.com', 80.0, 'maintenance', 2500)
 ON CONFLICT (email) DO NOTHING;
 
-INSERT INTO food (name, calories, protein, carbs, fats, source) VALUES
+INSERT INTO food (name, calories, protein, carbs, fats, source)
+VALUES
 INSERT INTO food (name, calories, protein, carbs, fats, source)
 VALUES
     ('Chicken breast, cooked', 165, 31.0, 0.0, 3.6, 'Frida Food Data / public nutrition data subset'),
