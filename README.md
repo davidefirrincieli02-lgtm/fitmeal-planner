@@ -62,7 +62,7 @@ Activate the virtual environment.
 On Windows PowerShell:
 
 ```powershell
-.venv\Scripts\Activate.ps1
+.venv\Scripts\activate.bat
 ```
 
 On Windows Command Prompt:
