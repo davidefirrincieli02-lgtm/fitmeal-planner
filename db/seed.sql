@@ -1,5 +1,5 @@
-INSERT INTO app_user (name, email, weight_kg, goal_type, calorie_target) VALUES
-('Demo User', 'demo@example.com', 80.0, 'maintenance', 2500)
+INSERT INTO app_user (name, email, weight_kg, goal_type, calorie_target)
+VALUES ('Demo User', 'demo@example.com', 80.0, 'maintenance', 2500)
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO food (name, calories, protein, carbs, fats, source)
@@ -127,17 +127,45 @@ ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO meal (user_id, name, meal_type)
 SELECT user_id, 'High protein lunch', 'lunch'
-FROM app_user WHERE email = 'demo@example.com'
-ON CONFLICT DO NOTHING;
+FROM app_user
+WHERE email = 'demo@example.com';
 
 INSERT INTO meal_item (meal_id, food_id, quantity_grams)
-SELECT m.meal_id, f.food_id, v.quantity_grams
+SELECT m.meal_id, f.food_id, 200
 FROM meal m
-JOIN app_user u ON u.user_id = m.user_id
-JOIN (VALUES
-    ('Chicken breast, cooked', 150.0),
-    ('White rice, cooked', 180.0),
-    ('Broccoli, cooked', 100.0)
-) AS v(food_name, quantity_grams) ON TRUE
-JOIN food f ON f.name = v.food_name
-WHERE u.email = 'demo@example.com' AND m.name = 'High protein lunch';
+JOIN food f ON f.name = 'Chicken breast, cooked'
+JOIN app_user u ON m.user_id = u.user_id
+WHERE u.email = 'demo@example.com'
+  AND m.name = 'High protein lunch';
+
+INSERT INTO meal_item (meal_id, food_id, quantity_grams)
+SELECT m.meal_id, f.food_id, 150
+FROM meal m
+JOIN food f ON f.name = 'White rice, cooked'
+JOIN app_user u ON m.user_id = u.user_id
+WHERE u.email = 'demo@example.com'
+  AND m.name = 'High protein lunch';
+
+INSERT INTO meal_item (meal_id, food_id, quantity_grams)
+SELECT m.meal_id, f.food_id, 100
+FROM meal m
+JOIN food f ON f.name = 'Broccoli, cooked'
+JOIN app_user u ON m.user_id = u.user_id
+WHERE u.email = 'demo@example.com'
+  AND m.name = 'High protein lunch';
+
+INSERT INTO daily_log (user_id, log_date)
+SELECT user_id, CURRENT_DATE
+FROM app_user
+WHERE email = 'demo@example.com'
+ON CONFLICT (user_id, log_date) DO NOTHING;
+
+INSERT INTO daily_log_meal (log_id, meal_id)
+SELECT dl.log_id, m.meal_id
+FROM daily_log dl
+JOIN app_user u ON dl.user_id = u.user_id
+JOIN meal m ON m.user_id = u.user_id
+WHERE u.email = 'demo@example.com'
+  AND dl.log_date = CURRENT_DATE
+  AND m.name = 'High protein lunch'
+ON CONFLICT (log_id, meal_id) DO NOTHING;
