@@ -4,8 +4,7 @@ ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO food (name, calories, protein, carbs, fats, source)
 VALUES
-INSERT INTO food (name, calories, protein, carbs, fats, source)
-VALUES
+
     ('Chicken breast, cooked', 165, 31.0, 0.0, 3.6, 'Frida Food Data / public nutrition data subset'),
     ('Chicken thigh, cooked', 209, 26.0, 0.0, 10.9, 'Frida Food Data / public nutrition data subset'),
     ('Turkey breast, cooked', 135, 29.0, 0.0, 1.6, 'Frida Food Data / public nutrition data subset'),
@@ -124,7 +123,6 @@ VALUES
     ('Burger bun', 270, 8.5, 50.0, 4.0, 'Frida Food Data / public nutrition data subset'),
     ('Sausage, pork', 301, 12.0, 2.0, 27.0, 'Frida Food Data / public nutrition data subset'),
     ('Meatballs', 250, 15.0, 8.0, 18.0, 'Frida Food Data / public nutrition data subset')
-ON CONFLICT (name) DO NOTHING;
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO meal (user_id, name, meal_type)
