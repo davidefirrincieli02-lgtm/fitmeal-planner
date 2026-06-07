@@ -1,6 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="grid two-cols">
+
+<div class="card" style="background-color: #e3f2fd; border-left: 5px solid #1976d2; margin-bottom: 20px;">
+    <h2>Current Goal</h2>
+    {% if logs and logs|length > 0 %}
+        <p style="font-size: 1.2em; margin: 10px 0;">
+            Calorie Target: <strong>{{ logs[0].calorie_target }} kcal</strong>
+        </p>
+        <p style="font-size: 0.9em; color: #555;">
+            (You can update your target for Bulk/Cut phases directly in your <a href="{{ url_for('logs') }}">Daily Log</a>)
+        </p>
+    {% else %}
+        <p>Start by creating your first daily log to set a calorie target!</p>
+    {% endif %}
+</div>
+
+<section class="grid">
     <div class="card">
         <h2>Food search</h2>
         <p class="muted">Regex parser examples: <code>chicken protein>=20</code>, <code>calories&lt;200 fats&lt;5</code>.</p>
@@ -31,30 +46,41 @@
             </tbody>
         </table>
     </div>
-
-    <div class="card">
-        <h2>Create meal</h2>
-        <form method="post" action="{{ url_for('create_meal') }}" class="stacked-form">
-            <input type="hidden" name="user_id" value="1">
-            <label>Meal name <input name="name" required placeholder="e.g. Post-workout dinner"></label>
-            <label>Meal type
-                <select name="meal_type">
-                    <option value="breakfast">Breakfast</option>
-                    <option value="lunch">Lunch</option>
-                    <option value="dinner">Dinner</option>
-                    <option value="snack">Snack</option>
-                    <option value="other">Other</option>
-                </select>
-            </label>
-            <button type="submit">Create meal</button>
-        </form>
-    </div>
 </section>
 
 <section class="card">
-    <h2>Meals</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div>
+            <h2 style="margin: 0;">Meals</h2>
+            <p class="muted" style="margin: 5px 0 0 0;">Create your meals to build your daily log.</p>
+        </div>
+        
+        <details>
+            <summary style="cursor: pointer; background-color: #198754; color: white; padding: 8px 15px; border-radius: 5px; list-style: none; font-weight: bold;">
+                + New Meal
+            </summary>
+            
+            <div style="position: absolute; right: 20px; margin-top: 10px; padding: 15px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10;">
+                <form method="post" action="{{ url_for('create_meal') }}" class="stacked-form" style="margin: 0;">
+                    <input type="hidden" name="user_id" value="1">
+                    <label>Meal name <input name="name" required placeholder="e.g. Post-workout dinner"></label>
+                    <label>Meal type
+                        <select name="meal_type">
+                            <option value="breakfast">Breakfast</option>
+                            <option value="lunch">Lunch</option>
+                            <option value="dinner">Dinner</option>
+                            <option value="snack">Snack</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </label>
+                    <button type="submit" style="margin-top: 10px; width: 100%;">Create meal</button>
+                </form>
+            </div>
+        </details>
+    </div>
+
     <table>
-        <thead><tr><th>Name</th><th>Type</th><th>kcal</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+        <thead><tr><th>Name</th><th>Type</th><th>kcal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th></th></tr></thead>
         <tbody>
         {% for meal in meals %}
             <tr>
@@ -64,6 +90,11 @@
                 <td>{{ meal.protein|round1 }}</td>
                 <td>{{ meal.carbs|round1 }}</td>
                 <td>{{ meal.fats|round1 }}</td>
+                <td>
+                    <form method="post" action="{{ url_for('delete_meal', meal_id=meal.meal_id) }}" style="margin: 0;">
+                        <button class="link-button" type="submit" style="color: #dc3545; padding: 0;">Delete</button>
+                    </form>
+                </td>
             </tr>
         {% endfor %}
         </tbody>
