@@ -108,11 +108,16 @@ code {
 }
 
 @media (max-width: 760px) {
-    .two-cols { grid-template-columns: 1fr; }
-    .inline-form { flex-direction: column; }
+    .two-cols {
+        grid-template-columns: 1fr;
+    }
 
+    .inline-form {
+        flex-direction: column;
+    }
+}
 
-    .table-scroll {
+.table-scroll {
     width: 100%;
     overflow-x: auto;
 }
@@ -133,5 +138,4 @@ code {
     top: 0;
     background: var(--card, #ffffff);
     z-index: 1;
-}
 }
